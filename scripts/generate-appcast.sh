@@ -13,8 +13,8 @@ trap 'rm -r "$STAGING"' EXIT
 if [[ -f "$ROOT/docs/appcast.xml" ]]; then
   cp "$ROOT/docs/appcast.xml" "$STAGING/appcast.xml"
 fi
-cp "$ARCHIVE" "$STAGING/We Rock Drive Mounts-${VERSION}.zip"
-cat > "$STAGING/We Rock Drive Mounts-${VERSION}.md" <<NOTES
+cp "$ARCHIVE" "$STAGING/We.Rock.Drive.Mounts-${VERSION}.zip"
+cat > "$STAGING/We.Rock.Drive.Mounts-${VERSION}.md" <<NOTES
 We Rock Drive Mounts ${VERSION} mit manueller und täglicher Update-Prüfung, Hinweis auf neue Versionen und Installation auf Knopfdruck.
 NOTES
 

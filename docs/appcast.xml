@@ -13,11 +13,11 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <description sparkle:format="markdown"><![CDATA[We Rock Drive Mounts 0.3.6 mit manueller und täglicher Update-Prüfung, Hinweis auf neue Versionen und Installation auf Knopfdruck.
 ]]></description>
-            <enclosure url="https://github.com/wirrockendigital/We.Rock.Drive.Mounts/releases/download/v0.3.6/We%20Rock%20Drive%20Mounts-0.3.6.zip" length="14337535" type="application/octet-stream" sparkle:edSignature="7/Dtz1LHE1iYC2wZYdvt8+bnopTunq3flWLAngaT/EtwMirejM1Br9NOT5qvU8FMPP3pYkm4/HinWaKvNwOYDQ=="/>
+            <enclosure url="https://github.com/wirrockendigital/We.Rock.Drive.Mounts/releases/download/v0.3.6/We.Rock.Drive.Mounts-0.3.6.zip" length="14337535" type="application/octet-stream" sparkle:edSignature="7/Dtz1LHE1iYC2wZYdvt8+bnopTunq3flWLAngaT/EtwMirejM1Br9NOT5qvU8FMPP3pYkm4/HinWaKvNwOYDQ=="/>
         </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: 8LnRm4x/z4HvO7XyAH6iw6Kw7/cMUs5MrtO5qwB5S+7ctYLUeznnupkM9Ah4s2AZhw2VxxLIWRdALFT8x0laCQ==
-length: 1296
+edSignature: UcYSzVmt58mGnAWZ6++3mLuYz0Q/eej804T9TXbc4Do1YBhL7Yx4KFuiiVv5lU5dwuRtJkdatmN10r8JLNG3Ag==
+length: 1290
 -->
