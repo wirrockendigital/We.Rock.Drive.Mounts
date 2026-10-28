@@ -1,0 +1,16 @@
+{
+  "source": "support-20260918-123807.supportbundle",
+  "observedAt": "2026-09-18T10:37:44Z",
+  "appVersion": "0.3.2",
+  "schemaVersion": 6,
+  "ethernetInterface": "en6",
+  "wifiInterface": "en0",
+  "lanHealthy": true,
+  "wifiEnabled": true,
+  "fallbackActive": true,
+  "networkDecision": "Waiting for stable LAN recovery",
+  "healthyMounts": 8,
+  "enabledMounts": 8,
+  "hardwareEvidenceInBundle": false,
+  "redaction": "No hostnames, share paths, usernames, addresses or hardware identifiers retained."
+}

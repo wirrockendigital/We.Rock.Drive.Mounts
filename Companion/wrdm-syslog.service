@@ -1,0 +1,19 @@
+[Unit]
+Description=We Rock Drive Mounts Synology Syslog Receiver
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=WRDM_SYSLOG_PORT=5514
+ExecStart=/opt/we-rock-drive-mounts-companion/wrdm-companion syslog-receive --port ${WRDM_SYSLOG_PORT}
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/we-rock-drive-mounts
+
+[Install]
+WantedBy=multi-user.target

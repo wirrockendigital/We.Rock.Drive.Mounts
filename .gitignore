@@ -1,0 +1,13 @@
+.build/
+build/
+DerivedData/
+__pycache__/
+*.pyc
+*.xcuserstate
+*.pcap
+*.pcapng
+*.log
+*.jsonl
+*.supportbundle
+*.pkg
+*.dmg

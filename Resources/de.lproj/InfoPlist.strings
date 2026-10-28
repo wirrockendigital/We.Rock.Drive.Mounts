@@ -1,0 +1,2 @@
+/* Describe the shared local-network purpose under the user-facing app identity. */
+"NSLocalNetworkUsageDescription" = "We Rock Drive Mounts verwendet dein lokales Netzwerk, um SMB-Freigaben, den Raspberry-Pi-Companion, Synology-Protokollquellen und konfigurierte Wake-on-LAN-Ziele zu erreichen.";
