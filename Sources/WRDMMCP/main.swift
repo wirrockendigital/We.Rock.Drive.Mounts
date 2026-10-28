@@ -162,7 +162,7 @@ struct WRDMMCPMain {
                 write(MCPResponse(id: request.id, result: .object([
                     "protocolVersion": .string(negotiatedVersion),
                     "capabilities": .object(["tools": .object([:])]),
-                    "serverInfo": .object(["name": .string("we-rock-drive-mounts"), "version": .string("0.3.6")]),
+                    "serverInfo": .object(["name": .string("we-rock-drive-mounts"), "version": .string("0.3.7")]),
                 ]), error: nil))
             case "ping":
                 write(MCPResponse(id: request.id, result: .object([:]), error: nil))

@@ -4,6 +4,20 @@ import XCTest
 
 // UpdateServiceTests cover published Sparkle enclosure metadata and durable daily state.
 final class UpdateServiceTests: XCTestCase {
+    // The published Sparkle appcast stores version elements before an enclosure without version attributes.
+    func testParsesPublishedSparkleItemElements() throws {
+        let xml = """
+        <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"><channel><item>
+          <sparkle:version>18</sparkle:version>
+          <sparkle:shortVersionString>0.3.7</sparkle:shortVersionString>
+          <enclosure url="https://github.com/example.zip" length="100" sparkle:edSignature="test" />
+        </item></channel></rss>
+        """
+        let item = try XCTUnwrap(UpdateFeedParser.parse(Data(xml.utf8))?.first)
+        XCTAssertEqual(item.build, 18)
+        XCTAssertEqual(item.version, "0.3.7")
+    }
+
     // A real appcast stores build metadata on enclosure rather than child elements.
     func testParsesSparkleEnclosureAndRejectsUnsafeNotesURL() throws {
         let xml = """

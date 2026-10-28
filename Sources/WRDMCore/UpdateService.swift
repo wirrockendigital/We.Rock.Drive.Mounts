@@ -62,8 +62,8 @@ public final class UpdateFeedParser: NSObject, XMLParserDelegate {
         }
         // Sparkle publishes the build and display version on the enclosure.
         if elementName == "enclosure" {
-            currentBuild = attributeDict["sparkle:version"].flatMap(Int.init)
-            currentVersion = attributeDict["sparkle:shortVersionString"]
+            if let build = attributeDict["sparkle:version"].flatMap(Int.init) { currentBuild = build }
+            if let version = attributeDict["sparkle:shortVersionString"] { currentVersion = version }
         }
     }
 

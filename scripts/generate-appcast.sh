@@ -14,9 +14,13 @@ if [[ -f "$ROOT/docs/appcast.xml" ]]; then
   cp "$ROOT/docs/appcast.xml" "$STAGING/appcast.xml"
 fi
 cp "$ARCHIVE" "$STAGING/We.Rock.Drive.Mounts-${VERSION}.zip"
-cat > "$STAGING/We.Rock.Drive.Mounts-${VERSION}.md" <<NOTES
+if [[ -n "${WRDM_RELEASE_NOTES_FILE:-}" ]]; then
+  cp "$WRDM_RELEASE_NOTES_FILE" "$STAGING/We.Rock.Drive.Mounts-${VERSION}.md"
+else
+  cat > "$STAGING/We.Rock.Drive.Mounts-${VERSION}.md" <<NOTES
 We Rock Drive Mounts ${VERSION} mit manueller und täglicher Update-Prüfung, Hinweis auf neue Versionen und Installation auf Knopfdruck.
 NOTES
+fi
 
 # The private Ed25519 seed is read from stdin and never enters project files or command arguments.
 "$SPARKLE_TOOL" --ed-key-file - --embed-release-notes \
