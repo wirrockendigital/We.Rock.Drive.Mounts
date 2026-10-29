@@ -77,6 +77,69 @@ final class UpdateServiceTests: XCTestCase {
         let notified = await service.read()
         XCTAssertEqual(notified.lastNotifiedVersion, "0.3.7")
     }
+
+    // An installed release must not keep showing the availability cached by the older app.
+    func testInstalledBuildHidesPreviouslyAvailableUpdate() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let paths = AppPaths(homeDirectory: root)
+        try paths.ensureDirectories()
+        let feed = URL(string: "https://wirrockendigital.github.io/We.Rock.Drive.Mounts/appcast.xml")!
+        UpdateFeedURLProtocol.responseData = Data(Self.releaseXML.utf8)
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [UpdateFeedURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let oldApp = UpdateService(paths: paths, feedURL: feed, session: session, build: 17)
+        let beforeInstallation = await oldApp.check()
+        XCTAssertEqual(beforeInstallation.availableVersion, "0.3.7")
+        let installedApp = UpdateService(paths: paths, feedURL: feed, session: session, build: 18)
+        let snapshot = await installedApp.read()
+        XCTAssertNil(snapshot.availableVersion)
+        XCTAssertNil(snapshot.availableBuild)
+        XCTAssertNil(snapshot.releaseNotesURL)
+    }
+
+    // A feed response must retain a notification recorded while the network request was pending.
+    func testConcurrentCheckPreservesNotification() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let paths = AppPaths(homeDirectory: root)
+        try paths.ensureDirectories()
+        let feed = URL(string: "https://wirrockendigital.github.io/We.Rock.Drive.Mounts/appcast.xml")!
+        UpdateFeedURLProtocol.responseData = Data(Self.releaseXML.utf8)
+        let initialConfiguration = URLSessionConfiguration.ephemeral
+        initialConfiguration.protocolClasses = [UpdateFeedURLProtocol.self]
+        let original = UpdateService(paths: paths, feedURL: feed,
+                                     session: URLSession(configuration: initialConfiguration), build: 17)
+        _ = await original.check()
+
+        let started = expectation(description: "Feed request is pending")
+        PausedUpdateFeedURLProtocol.onStart = { request in
+            PausedUpdateFeedURLProtocol.pending = request
+            started.fulfill()
+        }
+        defer {
+            PausedUpdateFeedURLProtocol.onStart = nil
+            PausedUpdateFeedURLProtocol.pending = nil
+        }
+        let delayedConfiguration = URLSessionConfiguration.ephemeral
+        delayedConfiguration.protocolClasses = [PausedUpdateFeedURLProtocol.self]
+        let delayed = UpdateService(paths: paths, feedURL: feed,
+                                    session: URLSession(configuration: delayedConfiguration), build: 17)
+        let check = Task { await delayed.check() }
+        await fulfillment(of: [started], timeout: 5)
+        await original.markNotified(version: "0.3.7")
+        PausedUpdateFeedURLProtocol.pending?.complete(with: Data(Self.releaseXML.utf8))
+        _ = await check.value
+        let afterConcurrentCheck = await original.read()
+        XCTAssertEqual(afterConcurrentCheck.lastNotifiedVersion, "0.3.7")
+    }
+
+    private static let releaseXML = """
+        <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"><channel><item>
+        <enclosure sparkle:version="18" sparkle:shortVersionString="0.3.7" />
+        </item></channel></rss>
+        """
 }
 
 // UpdateFeedURLProtocol supplies deterministic HTTPS responses without network access.
@@ -94,4 +157,23 @@ private final class UpdateFeedURLProtocol: URLProtocol {
         client?.urlProtocolDidFinishLoading(self)
     }
     override func stopLoading() {}
+}
+
+// PausedUpdateFeedURLProtocol exposes the in-flight state needed for a cross-process write regression.
+private final class PausedUpdateFeedURLProtocol: URLProtocol {
+    nonisolated(unsafe) static var onStart: ((PausedUpdateFeedURLProtocol) -> Void)?
+    nonisolated(unsafe) static var pending: PausedUpdateFeedURLProtocol?
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() { Self.onStart?(self) }
+    override func stopLoading() {}
+
+    // complete returns the held HTTPS response after the competing write has finished.
+    func complete(with data: Data) {
+        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: data)
+        client?.urlProtocolDidFinishLoading(self)
+    }
 }

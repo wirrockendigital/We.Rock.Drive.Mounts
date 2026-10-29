@@ -86,6 +86,25 @@ rm -f "$PLIST_INCOMING"
 "$ROOT/scripts/render-launch-agent.sh" "$PLIST_INCOMING" "$APP_TARGET" "$LOG_DIR" "$LABEL" "$BUNDLE_ID"
 
 # Stop owners only after both incoming artifacts have passed structural verification.
+# A running agent transfer must finish before replacing its executable.
+if [[ -x "$APP_TARGET/Contents/Helpers/wrdm" ]]; then
+  if ! "$APP_TARGET/Contents/Helpers/wrdm" --json transfer monitoring | /usr/bin/python3 -c '
+import json
+import sys
+
+try:
+    result = json.load(sys.stdin)
+    active = int(result["data"]["activeJobs"])
+    if result["ok"] is not True or active < 0:
+        raise ValueError("invalid transfer status")
+except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+    sys.exit(2)
+sys.exit(1 if active else 0)
+'; then
+    printf 'Installation stopped: active transfers or an unreadable transfer status. Retry after transfers finish.\n' >&2
+    exit 1
+  fi
+fi
 if launchctl print "$DOMAIN/$LABEL" >/dev/null 2>&1; then SERVICE_WAS_LOADED=true; fi
 if pgrep -x WeRockDriveMounts >/dev/null 2>&1; then APP_WAS_RUNNING=true; fi
 launchctl bootout "$DOMAIN/$LABEL" >/dev/null 2>&1 || true

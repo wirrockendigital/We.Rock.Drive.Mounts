@@ -117,11 +117,22 @@ public actor UpdateService {
     // read returns the latest durable status without assuming that no status means up to date.
     public func read() -> UpdateSnapshot {
         (try? SecureFileAccess.withLock(for: paths.updateStatusFile, exclusive: false) {
-            guard let data = try? Data(contentsOf: paths.updateStatusFile) else { return UpdateSnapshot() }
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
-            return (try? decoder.decode(UpdateSnapshot.self, from: data)) ?? UpdateSnapshot()
+            currentSnapshot()
         }) ?? UpdateSnapshot()
+    }
+
+    // currentSnapshot hides an update that was already installed since the last feed check.
+    private func currentSnapshot() -> UpdateSnapshot {
+        guard let data = try? Data(contentsOf: paths.updateStatusFile) else { return UpdateSnapshot() }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        var snapshot = (try? decoder.decode(UpdateSnapshot.self, from: data)) ?? UpdateSnapshot()
+        if let availableBuild = snapshot.availableBuild, availableBuild <= build {
+            snapshot.availableVersion = nil
+            snapshot.availableBuild = nil
+            snapshot.releaseNotesURL = nil
+        }
+        return snapshot
     }
 
     // checkIfDue checks every day after success and retries failures after one hour.
@@ -165,20 +176,35 @@ public actor UpdateService {
 
     // markNotified persists notification deduplication across agent restarts.
     public func markNotified(version: String) {
-        var snapshot = read()
-        guard snapshot.availableVersion == version else { return }
-        snapshot.lastNotifiedVersion = version
-        try? write(snapshot)
+        try? SecureFileAccess.withLock(for: paths.updateStatusFile) {
+            var snapshot = currentSnapshot()
+            guard snapshot.availableVersion == version else { return }
+            snapshot.lastNotifiedVersion = version
+            try persist(snapshot)
+        }
     }
 
-    // write uses the existing private, atomic runtime-file contract.
+    // write keeps a concurrent notification and newer check from being overwritten.
     private func write(_ snapshot: UpdateSnapshot) throws {
+        try SecureFileAccess.withLock(for: paths.updateStatusFile) {
+            let current = currentSnapshot()
+            if let currentAttempt = current.lastAttemptAt, let incomingAttempt = snapshot.lastAttemptAt,
+               currentAttempt > incomingAttempt { return }
+            var merged = snapshot
+            if current.availableVersion == merged.availableVersion,
+               current.lastNotifiedVersion == current.availableVersion {
+                merged.lastNotifiedVersion = current.lastNotifiedVersion
+            }
+            try persist(merged)
+        }
+    }
+
+    // persist writes one snapshot while the caller holds the cross-process file lock.
+    private func persist(_ snapshot: UpdateSnapshot) throws {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.sortedKeys]
-        try SecureFileAccess.withLock(for: paths.updateStatusFile) {
-            try SecureFileAccess.writeAtomically(try encoder.encode(snapshot), to: paths.updateStatusFile)
-        }
+        try SecureFileAccess.writeAtomically(try encoder.encode(snapshot), to: paths.updateStatusFile)
     }
 }
 

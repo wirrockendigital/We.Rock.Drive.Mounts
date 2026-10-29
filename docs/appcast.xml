@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>We Rock Drive Mounts</title>
         <item>
+            <title>0.3.8</title>
+            <pubDate>Thu, 29 Oct 2026 09:25:11 +0100</pubDate>
+            <sparkle:version>19</sparkle:version>
+            <sparkle:shortVersionString>0.3.8</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[We Rock Drive Mounts 0.3.8 behebt zwei Fehler im Update-Status: Nach einer Installation verschwindet der bereits erledigte Update-Hinweis sofort. Gleichzeitige Prüfungen durch App und Hintergrunddienst erhalten den Status der Update-Mitteilung zuverlässig. Der lokale und der Paket-Installer stoppen eine Installation, solange Transfers laufen oder deren Status nicht sicher gelesen werden kann.
+]]></description>
+            <enclosure url="https://github.com/wirrockendigital/We.Rock.Drive.Mounts/releases/download/v0.3.8/We.Rock.Drive.Mounts-0.3.8.zip" length="14339880" type="application/octet-stream" sparkle:edSignature="zsbXvyxNCRh0omlit+h8LYA7OL4gSdOBTpddO1pCQdOxSAGOBHqJY90iSv/kqc2jGywUptZvY9eemXUB6xLABA=="/>
+        </item>
+        <item>
             <title>0.3.7</title>
             <pubDate>Wed, 28 Oct 2026 17:36:17 +0100</pubDate>
             <sparkle:version>18</sparkle:version>
@@ -28,6 +38,6 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: CmbrwnwO3butDipdVtKhfgQZarInWxx1RS/dUNbE3rWsOKYlyZaWNrBENxCBlMDeZQxZ7yn4gD/HO5P+WwwjBw==
-length: 2238
+edSignature: 9HxyVoV/HUlhEcB6AiJVwMMuca4BowvhqLb4zpyVXJt8DqFTWzLmzkqV9obLTgwAE6UEucgGRGMvO8384VMBAw==
+length: 3349
 -->

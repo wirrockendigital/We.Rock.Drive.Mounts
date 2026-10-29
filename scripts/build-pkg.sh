@@ -32,6 +32,38 @@ codesign --verify --deep --strict "$APP_TARGET"
 # Verification can attach fresh provenance on current macOS builds, so clear it again before packaging.
 xattr -rc "$APP_TARGET"
 
+cat > "$PKG_SCRIPTS/preinstall" <<'PREINSTALL'
+#!/bin/bash
+# Refuse to replace a running transfer worker before the package payload is installed.
+set -euo pipefail
+
+INSTALLED_CLI="/Applications/We Rock Drive Mounts.app/Contents/Helpers/wrdm"
+if [[ ! -x "$INSTALLED_CLI" ]]; then exit 0; fi
+CONSOLE_USER="$(/usr/bin/stat -f %Su /dev/console)"
+if [[ -z "$CONSOLE_USER" || "$CONSOLE_USER" == "root" ]]; then
+  echo "Cannot verify active transfers without a console user." >&2
+  exit 1
+fi
+CONSOLE_UID="$(/usr/bin/id -u "$CONSOLE_USER")"
+if ! /bin/launchctl asuser "$CONSOLE_UID" /usr/bin/sudo -u "$CONSOLE_USER" "$INSTALLED_CLI" --json transfer monitoring | /usr/bin/python3 -c '
+import json
+import sys
+
+try:
+    result = json.load(sys.stdin)
+    active = int(result["data"]["activeJobs"])
+    if result["ok"] is not True or active < 0:
+        raise ValueError("invalid transfer status")
+except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+    sys.exit(2)
+sys.exit(1 if active else 0)
+'; then
+  echo "Installation stopped: active transfers or an unreadable transfer status. Retry after transfers finish." >&2
+  exit 1
+fi
+PREINSTALL
+chmod 755 "$PKG_SCRIPTS/preinstall"
+
 cat > "$PKG_SCRIPTS/postinstall" <<'POSTINSTALL'
 #!/bin/bash
 # Register the per-user WRDM LaunchAgent and CLI links after installing the app bundle.
