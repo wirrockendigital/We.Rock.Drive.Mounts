@@ -1,122 +1,73 @@
-# We Rock Drive Mounts für macOS
+# We Rock Drive Mounts — SMB network drives for macOS
 
-We Rock Drive Mounts ist eine native macOS-Menüleisten-App für zuverlässige Synology- und SMB-Netzlaufwerke. Sie überwacht verbundene Freigaben, stellt unterbrochene Verbindungen kontrolliert wieder her und hält Ethernet als bevorzugte Verbindung. WLAN kann für AirDrop zeitweise aktiv bleiben und bei einem Ethernet-Ausfall automatisch einspringen.
+Keep your Synology NAS and other SMB network drives connected on your Mac. We Rock Drive Mounts is a native macOS menu bar app that monitors shared folders, reconnects drives after interruptions, and helps you copy files reliably between your Mac and NAS. It also gives you Ethernet and Wi-Fi controls, transfer history, and useful diagnostics when a connection fails.
 
-Die App erfasst auf Wunsch Sleep-/Wake-, Netzwerk-, SMB- und Schnittstellenereignisse. Ein Raspberry Pi kann ergänzend begrenzte Wireshark-Paketmitschnitte und Synology-Syslog-Ereignisse liefern sowie diesen Mac per Wake-on-LAN wecken. Die lokale KI-Auswertung fasst vorhandene Belege und payload-freie `tshark`-Kennzahlen mit Quellenangaben zusammen.
+![We Rock Drive Mounts overview showing network drive, Ethernet, Wi-Fi, and recovery status in the English macOS app](Documentation/screenshots/wrdm-overview-en.png)
 
-Für große NAS-Transfers kann We Rock Drive Mounts Dateien oder Ordner zwischen Mac und gemounteten SMB-Freigaben kopieren oder verschieben. Transfers laufen über einen eigenen WRDM-Worker im Hintergrunddienst, bleiben als Jobs sichtbar und können nach einem Abbruch fortgesetzt werden. Bei hoher Transferrate oder Fehlern kann die App Diagnoseereignisse, Pi-Captures und ein Incident-Bundle aus Mount-Status, Netzwerkstatus, Traffic, Logs und vorhandenen Synology-Belegen erzeugen.
+## What you can do
 
-## Voraussetzungen
+- **Keep SMB shares available.** Add network drives that you normally open in Finder. The background service checks their health and reconnects missing drives with bounded retries. When a mounted drive stops responding, the app shows its recovery state and asks before any forced recovery.
+- **Copy or move files between Mac and NAS.** Drop files on the menu bar app or start a transfer from Finder. Choose the destination, copy or move, what happens after an interruption, and whether to keep your Mac awake. Watch progress and transfer history in a separate window. File verification and controlled retries help with large transfers.
+- **Prefer Ethernet while keeping Wi-Fi useful.** Let the app prefer a healthy wired connection, enable Wi-Fi if Ethernet fails, and open a temporary Wi-Fi window for AirDrop. See connected interfaces, traffic, and changes to monitored Ethernet port settings before choosing whether to restore preferred values.
+- **Understand connection failures.** Record sleep and wake, network, SMB, and transfer events. Export a support ZIP with incident evidence. Optional Synology logs and a Raspberry Pi companion can add syslog and bounded packet captures. Local AI analysis is available on supported Macs; the app also provides rule-based diagnostics.
+- **Wake your Mac remotely.** Configure and test the available Wake-on-LAN routes through a Raspberry Pi or other supported route, then enable only the routes you want to use.
+- **Use the same settings from the app or terminal.** Export and import your `.wrdmconfig` configuration, inspect status with the `wrdm` command, or connect local automation through `wrdm-mcp`.
 
-- Mac mit Intel-Prozessor oder Apple Silicon und macOS 15 Sequoia oder neuer
-- Für lokale KI: Apple Silicon, macOS 26 oder neuer und aktiviertes Apple Intelligence
-- SMB-Freigaben, die im Finder erreichbar sind
-- Optional: Raspberry Pi mit SSH-Zugang für Paketmitschnitt, Syslog und Wake-on-LAN
-- Optional: Wireshark auf dem Mac für Live-Mitschnitte
+![English transfer settings in We Rock Drive Mounts showing monitoring, retry, file verification, and keep-awake options](Documentation/screenshots/wrdm-transfers-en.png)
 
-Die Universal-App enthält beide Prozessorarchitekturen. Mount-Verwaltung, Transfers, Finder-Integration und klassische Diagnosen stehen ab macOS 15 zur Verfügung. Die lokale KI wird abhängig von Betriebssystem und Apple-Intelligence-Verfügbarkeit aktiviert; ein Hinweis in den KI-Einstellungen erklärt den aktuellen Status. Die regelbasierte Diagnose bleibt verfügbar.
+## Requirements
 
-## Installation
+- macOS 15 Sequoia or later on Apple Silicon or Intel
+- An SMB shared folder you can access from Finder, such as a Synology NAS share
+- For local AI analysis: a supported Apple Silicon Mac running macOS 26 or later with Apple Intelligence enabled
+- Optional: a Raspberry Pi with SSH access for packet capture, syslog, and Wake-on-LAN; Wireshark for live captures on the Mac
 
-Lade das aktuelle Universal-Installationspaket unter [GitHub Releases](https://github.com/wirrockendigital/We.Rock.Drive.Mounts/releases/latest) herunter und öffne die `.pkg`-Datei. Folge anschließend dem macOS-Installer. Die öffentliche Beta ist ad hoc signiert; macOS kann beim ersten Start eine zusätzliche Bestätigung verlangen.
+## Install on your Mac
 
-### Aus dem Quellcode installieren
+1. Download the latest universal macOS `.pkg` from [GitHub Releases](https://github.com/wirrockendigital/We.Rock.Drive.Mounts/releases/latest).
+2. Open the package and follow the macOS installer. The beta uses ad hoc signing, so macOS may ask for an additional confirmation when you first open it.
+3. Open **We Rock Drive Mounts** from Applications. Its icon appears in the menu bar, and the background service starts monitoring your configured drives.
 
-Zum Bauen benötigst du Xcode mit macOS-26-SDK und Swift 6.2 oder neuer. Der fertige Build läuft ab macOS 15.
-
-
-Im Projektordner:
+To build and install from source, use Xcode with the macOS 26 SDK and Swift 6.2 or later:
 
 ```bash
 ./install.sh
 ```
 
-Der Installer baut und signiert die Beta lokal mit festen Komponentenkennungen, installiert sie unter `/Applications/We Rock Drive Mounts.app`, richtet den Hintergrunddienst ein und startet die App. Vorhandene Einstellungen werden automatisch übernommen. Da die Beta bewusst ad-hoc signiert ist, kann macOS nach einem neuen Build erneut um Zugriff auf das lokale Netzwerk bitten.
+The installed app runs on macOS 15 or later. The source installer installs the app in `/Applications`, sets up its background service, and keeps your existing settings.
 
-Die ausgeführten Komponenten bleiben im festen App-Bundle: App unter `/Applications/We Rock Drive Mounts.app/Contents/MacOS/WeRockDriveMounts`, Agent unter `/Applications/We Rock Drive Mounts.app/Contents/Helpers/We Rock Drive Mount Agent.app/Contents/MacOS/We Rock Drive Mount Agent` und CLI unter `/Applications/We Rock Drive Mounts.app/Contents/Helpers/wrdm`. `~/.local/bin/wrdm` ist ein Symlink auf diese CLI.
+## Get started
 
-## Verwendung
+1. Open the menu bar icon and choose **Settings**.
+2. In **Network drives**, add the SMB shares you want the app to monitor, or import drives already mounted in Finder. Your passwords stay in macOS Keychain.
+3. In **Ethernet & Wi-Fi**, choose whether to prefer Ethernet and when Wi-Fi should turn on or off. Use **Start AirDrop window** when you temporarily need Wi-Fi.
+4. Drop files on the menu bar icon or choose **We Rock Transfer…** in Finder. Select a destination and a retry policy, then follow the job in **Transfers**.
+5. If a drive or transfer fails, open **Overview** or **Diagnostics** to inspect its status. Use **Export support file** when you need to share a redacted support bundle.
 
-Nach der Installation erscheint We Rock Drive Mounts in der macOS-Menüleiste.
+A left click on the menu bar icon opens the transfer drop target; a right click opens status and actions. During transfers, the menu bar shows overall progress. The **Transfers** settings control defaults, while the separate transfer window shows current and past jobs.
 
-Unter **Updates** in den Einstellungen kannst du jederzeit **Auf Updates prüfen** wählen. Der Hintergrunddienst prüft zusätzlich täglich den veröffentlichten Release-Feed. Ist eine neue Version verfügbar, siehst du die Versionsnummer und die Release-Notizen; mit **Update installieren** startest du die Installation. Laufende Transfers werden zuerst abgeschlossen. Wenn du Benachrichtigungen aktivierst, meldet macOS eine neue Version einmalig.
+### Recovery and transfer safety
 
-1. Öffne das Symbol in der Menüleiste.
-2. Füge unter **Netzlaufwerke** deine SMB-Freigaben hinzu oder prüfe die übernommenen Laufwerke.
-3. Aktiviere unter **Ethernet & WLAN** die automatische Verbindungssteuerung. Das AirDrop-Zeitfenster beträgt standardmäßig 15 Minuten.
-4. Lege Dateien oder Ordner in das Transfer-Droplet unter dem Menüleistensymbol oder wähle im Finder **We Rock Transfer …**. Ziel, Kopieren/Verschieben, Fortsetzungsverhalten und optionales Wachhalten des Macs legst du im anschließenden Dialog fest. Aktuelle und vergangene Jobs stehen im separaten Transferfenster; unter **Transfers** in den Einstellungen liegen nur die dauerhaften Standards.
-5. Schalte unter **Diagnose** die gewünschten lokalen Aufzeichnungen ein.
-6. Verbinde unter **Datenquellen** optional den Raspberry Pi und Synology.
-7. Aktiviere unter **Diesen Mac wecken** nur die gewünschten und erfolgreich geprüften Wake-Routen.
+The app distinguishes a missing share from an SMB mount that macOS still lists but that no longer responds. It checks that the old mount has detached before reconnecting it. Active We Rock Drive Mounts transfers protect their drive from unmounting. **Force recovery…** requires your confirmation; when macOS reports a mount that cannot be interrupted, the app shows **Restart required** and stops further recovery attempts for that boot.
 
-Ein Linksklick öffnet das Transfer-Droplet direkt unter dem Menüleistensymbol; ein weiterer Linksklick schließt es. Ein Rechtsklick bietet Status-, Diagnose-, Transfer- und Einstellungsaktionen. Während eines laufenden Transfers zeigt die Menüleiste den aggregierten Fortschritt in Prozent neben dem Symbol. Alle technischen Details, Speichergrenzen und Dateipfade liegen im Bereich **Erweitert**.
+For a move, source files are removed only after the copied data has been verified and the move is finalized. You can pause, stop, and resume transfer jobs. Automatic retries use a capped delay and stop on permanent configuration or permission errors.
 
-Unter **Konfiguration** kannst du deine Einstellungen als `.wrdmconfig`-Datei exportieren und auf demselben Mac für einen anderen Benutzer wieder importieren. Der Export enthält nicht geheime App-Einstellungen wie SMB-Adressen, Diagnoseoptionen, Raspberry-Pi-, Synology-, KI- und Wake-on-LAN-Konfiguration. Passwörter, API-Keys und Tokens bleiben im macOS-Schlüsselbund und werden nicht exportiert.
+### Configuration, updates, and command line
 
-### Ethernet und Portüberwachung
+Use **Configuration** to export your setup as a `.wrdmconfig` file and import it for another local user on the same Mac. The file contains app settings, including share addresses and optional integration settings; passwords and tokens remain in macOS Keychain. Review the file before sharing it because addresses can identify your network.
 
-Unter **Ethernet & WLAN** stehen die Anschlüsse mit ihren macOS-Namen. **Automatisch**
-berücksichtigt geeignete Ethernet-Dienste und die vorhandene Dienstreihenfolge.
-Nach drei stabilen Prüfungen kann WLAN abgeschaltet werden; ein bewusst gestartetes
-AirDrop-Fenster behält seine Restzeit. Die App zeigt den Grund jeder Entscheidung.
+Use **Check for updates** in **Overview** whenever you want to check the latest release. The app also checks daily in the background and shows available release notes before you choose to install an update. It waits for active transfers to finish.
 
-Mit **Aktuelle Werte übernehmen …** erstellst du ein Profil für einen bestimmten
-Adapter in diesem Netzwerk. Wähle die Werte aus, die überwacht werden sollen, und
-aktiviere die Überwachung. Bestätigte Abweichungen erscheinen dauerhaft in der App
-und als Warnsymbol in der Menüleiste. **Wunschwerte wiederherstellen …** zeigt zuerst
-eine Vorschau und benötigt deine Bestätigung. Die Dienstpriorität lässt sich ebenfalls
-über eine Vorschau ändern. Laufende WRDM-Transfers verhindern diese Änderungen.
-
-**Support-Datei exportieren** speichert ein ZIP im Downloads-Ordner.
-**Support-E-Mail vorbereiten** erstellt zusätzlich einen bearbeitbaren Mailentwurf
-oder bietet Nachrichtentext und ZIP zum manuellen Anhängen an.
-
-### Kontrollierte SMB-Wiederherstellung
-
-WRDM unterscheidet ein wirklich fehlendes Netzlaufwerk von einem noch in macOS eingetragenen, aber nicht mehr antwortenden SMB-Mount. Fehlende Laufwerke kann der Hintergrunddienst mit begrenztem Backoff automatisch neu verbinden. Bei einem festgefahrenen Mount versucht er höchstens ein normales Unmount und prüft vor jedem Remount, ob macOS das alte Laufwerk tatsächlich aus der Mount-Tabelle entfernt hat.
-
-Wenn ein WRDM-Transfer das Laufwerk verwendet, wird kein Unmount ausgeführt. Ein erzwungenes Unmount startet nur nach deiner ausdrücklichen Bestätigung über **Force recovery…** oder `wrdm --yes mounts force-recover`. Bleibt der macOS-SMB-Prozess im nicht unterbrechbaren Kernelzustand hängen, zeigt WRDM **Restart required** und beendet für diesen Systemstart alle weiteren Reparaturversuche.
-
-Jeder Ausfall erhält genau einen lokalen Mount-Incident mit Verfügbarkeit, Recovery-Phase, Fehlercode und Evidenzpfad. Sleep- und Wake-Ereignisse werden nur aus tatsächlichen macOS-Power-Logs übernommen; eine verspätete Überwachungsrunde wird separat als Verzögerung gemeldet.
-
-## Kommandozeile und AI-Anbindung
-
-Die Installation stellt `wrdm` und `wrdm-mcp` unter `~/.local/bin` bereit. Damit lassen sich Status, Mounts, Transfers, Netzwerk, Diagnosen, Pi, Synology, KI-Analyse und Wake-on-LAN über dieselbe Kernlogik wie in der App steuern.
+The installer provides the `wrdm` command and local `wrdm-mcp` server. For example:
 
 ```bash
 wrdm status
 wrdm check
 wrdm mounts list
-wrdm mounts recover
-wrdm --yes mounts force-recover <mount-id>
-wrdm mounts incidents
-wrdm config export ~/Desktop/we-rock-drive-mounts.wrdmconfig
-wrdm --yes config import ~/Desktop/we-rock-drive-mounts.wrdmconfig
-wrdm --yes app login on
-wrdm network status
-wrdm diagnostics export
 wrdm transfer list
-wrdm --yes transfer start copy macToNAS ask true false "/Volumes/NAS/Ziel" "$HOME/Desktop/Datei"
-wrdm pi health
-wrdm ai analyze "Was war die wahrscheinlichste Ursache des letzten Abbruchs?"
+wrdm diagnostics export
 ```
 
-`transfer start` legt einen Job an; der Hintergrunddienst startet und überwacht den eigentlichen WRDM-Worker. Fortschritt, Geschwindigkeit, hohe Transferlast, Pausen, Stops, Fortsetzungen und Fehler stehen danach über App, CLI und MCP im selben persistenten Jobstatus. Automatische Wiederholungen können auf eine feste Anzahl begrenzt oder ohne feste Obergrenze geplant werden. Auch im unbegrenzten Modus bleibt jeder Versuch einzeln abbrechbar und wird mit einer auf fünf Minuten gedeckelten Wartezeit gestartet; dauerhafte Konfigurations- und Berechtigungsfehler stoppen sofort.
+See the [command-line reference](Documentation/CLI.md) for all commands. To uninstall the app while keeping your settings and diagnostics, run `./uninstall.sh` from the source checkout. To remove those user data as well, run `./uninstall.sh --purge`.
 
-Die vollständige Befehlsreferenz steht in [Documentation/CLI.md](Documentation/CLI.md).
-
-## Lizenz
-
-We Rock Drive Mounts steht unter der [GNU General Public License Version 3 oder neuer (GPL-3.0-or-later)](LICENSE). Das eingebundene Sparkle-Framework steht unter seiner eigenen, in [ThirdParty/Sparkle-LICENSE](ThirdParty/Sparkle-LICENSE) dokumentierten Lizenz.
-
-## Deinstallation
-
-```bash
-./uninstall.sh
-```
-
-Die normale Deinstallation erhält Einstellungen und Diagnosen. Für eine vollständige Entfernung der Benutzerdaten:
-
-```bash
-./uninstall.sh --purge
-```
+We Rock Drive Mounts is licensed under [GPL-3.0-or-later](LICENSE). The bundled Sparkle framework has its [own license](ThirdParty/Sparkle-LICENSE).
